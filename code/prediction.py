@@ -1,4 +1,4 @@
-# Valkyrie Take-home
+# Case Study Take-home
 # Basic prediction/recommendation
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.model_selection import KFold
@@ -32,6 +32,8 @@ def one_hot_encode(df, feature):
     df2 = pd.DataFrame(onehot_encoded, columns=cols)
     df = pd.concat([df, df2], axis=1)
     return(df)
+
+# Note: after completing, I realized this split methodology has unwanted leakage due to individuals potentially being in both train and test for different courses.
 
 
 def cv_model(dataframe, feature_list):
@@ -199,45 +201,6 @@ sn.heatmap(corrMatrix, annot=True)
 # outcome: score
 # features: assessment, date submitted, gender, region, highest ed, imd band, age band, disability, date
 
-
-### Model 1 ###
-outcome = 'score'
-feature_list = ['score',
-                'x0_F', 'x0_East_Anglian_Region',
-                'x0_East_Midlands_Region', 'x0_Ireland', 'x0_London_Region', 'x0_North_Region', 'x0_North_Western_Region', 'x0_Scotland',
-                'x0_South_East_Region', 'x0_South_Region', 'x0_South_West_Region', 'x0_Wales', 'x0_West_Midlands_Region', 'x0_Yorkshire_Region', 'x0_N', 'x0_Y',
-                # 'x0_AAA', 'x0_BBB', 'x0x_CCC', 'x0_EEE',
-                'x0_DDD', 'x0_FFF', 'x0_GGG',
-                'x0_2013B', 'x0_2013J', 'x0_2014B', 'x0_2014J', 'x0_CMA',
-                'x0_Exam', 'highest_education_ordinal', 'imd_band_ordinal', 'age_band_ordinal', 'date']
-
-
-# Train and predict
-# dtrain, dtest, cv_results, X_train, X_test, y_train, y_test = cv_model(
-#     dataframe=df, feature_list=feature_list)
-# cv_results
-
-# modelobj = train_model(dtrain, dtest)
-# preds_y, preds_train = predict_eval(dtrain, dtest, y_train, y_test)
-
-# result_train = pd.DataFrame(X_train, columns=feature_list[1:])
-# result_test = pd.DataFrame(X_test, columns=feature_list[1:])
-
-# result_train['predictions'] = preds_train
-# result_test['predictions'] = preds_y
-# result_train['truth'] = y_train
-# result_test['truth'] = y_test
-
-# result_test.to_csv("preds_test_m1.csv")
-# result_train.to_csv("preds_train_m1.csv")
-
-# # Feature importance
-# gainfeat = modelobj.get_score(importance_type='gain')
-# sorted(gainfeat, key=gainfeat.get, reverse=True)
-
-# modelobj.get_score(importance_type='weight')
-
-
 # Type of course seems top of the influence on score, followed by the time since the course was done, the student's prior education.
 
 # Three types of assessments exist: Tutor Marked Assessment (TMA), Computer Marked Assessment (CMA) and Final Exam (Exam).
@@ -288,97 +251,3 @@ gainfeat = modelobj.get_score(importance_type='gain')
 sorted(gainfeat, key=gainfeat.get, reverse=True)
 
 modelobj.get_score(importance_type='weight')
-
-### Model 3 ###
-# # Computer Marked
-# df2 = df[df['x0_CMA'] == 1.0]
-# # On the other hand in this case the assessment ID is the biggest predictor
-
-# # Train and predict
-# dtrain, dtest, cv_results, X_train, X_test, y_train, y_test = cv_model(
-#     dataframe=df2, feature_list=feature_list)
-# cv_results
-
-# modelobj = train_model(dtrain, dtest)
-# preds_y, preds_train = predict_eval(dtrain, dtest, y_train, y_test)
-
-# result_train = pd.DataFrame(X_train, columns=feature_list[1:])
-# result_test = pd.DataFrame(X_test, columns=feature_list[1:])
-
-# result_train['predictions'] = preds_train
-# result_test['predictions'] = preds_y
-# result_train['truth'] = y_train
-# result_test['truth'] = y_test
-
-# result_test.to_csv("preds_test_m3.csv")
-# result_train.to_csv("preds_train_m3.csv")
-
-
-# # Feature importance
-# gainfeat = modelobj.get_score(importance_type='gain')
-# sorted(gainfeat, key=gainfeat.get, reverse=True)
-
-# modelobj.get_score(importance_type='weight')
-
-# ### Model 4 ###
-# # B Type, not CMA
-# df3 = df.query('x0_2013B == 1.0 or x0_2014B == 1.0')
-# df3 = df3.query('x0_CMA == 0.0')
-# # Assessment ID is top predictor
-
-# # Train and predict
-# dtrain, dtest, cv_results, X_train, X_test, y_train, y_test = cv_model(
-#     dataframe=df3, feature_list=feature_list)
-# cv_results
-
-# modelobj = train_model(dtrain, dtest)
-# preds_y, preds_train = predict_eval(dtrain, dtest, y_train, y_test)
-
-# result_train = pd.DataFrame(X_train, columns=feature_list[1:])
-# result_test = pd.DataFrame(X_test, columns=feature_list[1:])
-
-# result_train['predictions'] = preds_train
-# result_test['predictions'] = preds_y
-# result_train['truth'] = y_train
-# result_test['truth'] = y_test
-
-# result_test.to_csv("preds_test_m4.csv")
-# result_train.to_csv("preds_train_m4.csv")
-
-
-# # Feature importance
-# gainfeat = modelobj.get_score(importance_type='gain')
-# sorted(gainfeat, key=gainfeat.get, reverse=True)
-
-# modelobj.get_score(importance_type='weight')
-
-# ### Model 5 ###
-# # J Type, not CMA
-# df3 = df.query('x0_2013J == 1.0 or x0_2014J == 1.0')
-# df3 = df3.query('x0_CMA == 0.0')
-# # assessment ID top, then Ireland
-
-# # Train and predict
-# dtrain, dtest, cv_results, X_train, X_test, y_train, y_test = cv_model(
-#     dataframe=df3, feature_list=feature_list)
-# cv_results
-
-# modelobj = train_model(dtrain, dtest)
-# preds_y, preds_train = predict_eval(dtrain, dtest, y_train, y_test)
-
-# result_train = pd.DataFrame(X_train, columns=feature_list[1:])
-# result_test = pd.DataFrame(X_test, columns=feature_list[1:])
-
-# result_train['predictions'] = preds_train
-# result_test['predictions'] = preds_y
-# result_train['truth'] = y_train
-# result_test['truth'] = y_test
-
-# result_test.to_csv("preds_test_m5.csv")
-# result_train.to_csv("preds_train_m5.csv")
-
-# # Feature importance
-# gainfeat = modelobj.get_score(importance_type='gain')
-# sorted(gainfeat, key=gainfeat.get, reverse=True)
-
-# modelobj.get_score(importance_type='weight')

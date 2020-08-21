@@ -1,4 +1,4 @@
-# Valkyrie Take-home
+# Case Study Take-home
 # Basic prediction/recommendation
 from patsy import dmatrices
 from sklearn.metrics import mean_squared_error, r2_score
