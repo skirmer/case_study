@@ -14,8 +14,8 @@ This analysis uses the Open University Distance Learning dataset, and analyzed t
 
 * https://analyse.kmi.open.ac.uk/open_dataset
 * http://www.open.ac.uk/
-* https://www.nature.com/articles/sdata2017171
-Zip File: https://drive.google.com/file/d/1nt1AZKIbcUGB4mNwXbmPMZT79I4DWTGs/view?usp=sharing 
+* https://www.nature.com/articles/sdata2017171  
+* Zip File: https://drive.google.com/file/d/1nt1AZKIbcUGB4mNwXbmPMZT79I4DWTGs/view?usp=sharing 
 
 
 In general, student behavior (use of course materials) seems strongest, with choice of course also distinguishing student outcomes. I have generated an XGBoost regression for this purpose, and a linear regression as a comparison model.
