@@ -1,0 +1,456 @@
+---
+title: "EDA"
+output: 
+  html_document:
+    toc: false
+    code_folding: hide
+---
+      
+```{r, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+
+feat <- read.csv("../../data/clean/features.csv")
+
+```
+
+# Introduction {.tabset}
+This data describes student performance in online learning through The Open University, a university based in the United Kingdom. Courses are delivered in a structured fashion entirely online, and students are assigned small tutoring groups to support their learning.
+
+The visualizations here describe the relationships between some characteristics of students and courses, as well as the scores achieved.
+
+Scores are assigned in three different ways: TMA (tutor-marked), CMA (computer-marked), and "Exam" which is the final exam for a course.
+Different courses are called modules, and are labeled with letter codes here such as AAA or GGG in the column `code_module`.
+Courses are offered at different times of year as well, and this is shown in `code_presentation`.
+
+Student interaction with the course material online is described by how many times they click on a specific piece of content, for example `sum_clicksum_glossary` sums the number of times the student clicked the glossary for the course in question.
+
+Student characteristics offered include gender, disability status, highest formal education level achieved, age group (very broad), deprivation/poverty level (IMD Band), and region of UK where they reside. 
+
+## Insights
+
+* Question of interest: how much do the student's characteristics impact the score? What's the predictive value? Is this program providing equal opportunities/learning to students of different backgrounds?
+
+
+### Course Type
+
+* BBB and FFF are the most popular courses  
+* Gender distribution across subjects is quite unequal  
+
+### Content
+
+* The most popular content by clicks are forum, homepage, outside content, and quizzes.
+
+### Scoring
+
+* Computer marked exams are noticeably different from others -  modules GGG and BBB seem to have the really different CMA traits
+* The quantity of final exams seems smaller than expected - students withdrawing before course completion?
+* Module BBB has strikingly high number of score zero as compared to others - also a course that has more female students
+
+
+### Students
+* Most students are under age 35  
+* There are students from across the deprivation spectrum, with a slight skew towards the lower end  
+  * Gender is relatively consistent across this spectrum, but missing deprivation data is substantially more male
+* Most have some education prior to the course, usually A-levels  
+* Ireland is the least represented region  
+
+
+
+## Features {.tabset}
+
+Some features recoded in python script.
+
+### Academic
+
+The `id_assessment` column probably has internal correlations that would lend to grouping.
+
+```{r, message=FALSE, warning=FALSE }
+
+ggplot(feat, aes(x=as.factor(code_module)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+```
+
+Semester
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(feat, aes(x=as.factor(code_presentation)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+Type of grading
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(feat, aes(x=as.factor(assessment_type)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+### Prior Attempts
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(feat, aes(x=num_of_prev_attempts))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 5000)
+
+ggplot(feat, aes(x=log(num_of_prev_attempts), group=as.factor(code_module), fill = as.factor(code_module)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+```
+
+### Current Credits
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(feat, aes(x=studied_credits))+
+  theme_bw()+
+  geom_density()+
+  geom_vline(xintercept=75)
+
+ggplot(feat, aes(x=studied_credits, group=as.factor(code_module), fill = as.factor(code_module)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_vline(xintercept=75)+
+  geom_density(alpha = .5)
+
+```
+
+### Dates
+These indicate the days since the module was taught
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(feat, aes(x=date))+
+  theme_bw()+
+  geom_density()
+
+
+ggplot(feat, aes(x=date, group=as.factor(assessment_type), fill = as.factor(assessment_type)))+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+
+ggplot(feat, aes(x=date, group=as.factor(code_module), fill = as.factor(code_module)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+```
+
+### Clicks
+
+```{r}
+
+skimr::skim(feat[, c("sum_clicksum_dataplus","sum_clicksum_dualpane","sum_clicksum_externalquiz"  
+,"sum_clicksum_folder","sum_clicksum_forumng","sum_clicksum_glossary","sum_clicksum_homepage","sum_clicksum_htmlactivity"  
+,"sum_clicksum_oucollaborate","sum_clicksum_oucontent","sum_clicksum_ouelluminate","sum_clicksum_ouwiki","sum_clicksum_page"          
+,"sum_clicksum_questionnaire","sum_clicksum_quiz","sum_clicksum_repeatactivity","sum_clicksum_resource","sum_clicksum_sharedsubpage" 
+,"sum_clicksum_subpage","sum_clicksum_url")])
+
+```
+
+Quick test of the high-clicking outliers 
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+DT::datatable(feat[feat$sum_clicksum_quiz > 10000,])
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+DT::datatable(feat[feat$sum_clicksum_forumng > 10000,])
+```
+
+
+
+### Student traits
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=as.factor(age_band)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=as.factor(gender)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=as.factor(imd_band)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=as.factor(highest_education)))+
+  theme_bw()+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=as.factor(region)))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_histogram(stat="count")+
+    geom_text(stat='count', aes(label=..count..), nudge_y = 1500)
+
+
+```
+
+
+### Gender x Poverty
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$imd_band <- factor(feat$imd_band, levels = c("0-10%","10-20","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"))
+
+ggplot(feat, aes(x=imd_band, group=(gender), fill = (gender)))+
+  theme_bw()+
+  geom_histogram(stat="count", alpha = .5)+
+    geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5))
+
+
+```
+
+### Course x Poverty
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$imd_band <- factor(feat$imd_band, levels = c("0-10%","10-20","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"))
+
+ggplot(feat, aes(x=code_module, group=(imd_band), fill = (imd_band)))+
+  theme_bw()+
+  geom_histogram(stat="count", alpha = .5)+
+    geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5))
+
+
+```
+
+### Test Type x Gender
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$test_plus <- paste(feat$code_presentation, feat$assessment_type)
+
+ggplot(feat, aes(x=test_plus, group=(gender), fill = (gender)))+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_histogram(stat="count", alpha = .5)+
+    geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5))
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$test_plus <- paste(feat$code_module, feat$assessment_type)
+
+ggplot(feat, aes(x=test_plus, group=(gender), fill = (gender)))+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_histogram(stat="count", alpha = .5)+
+    geom_text(stat='count', aes(label=..count..), position = position_stack(vjust = 0.5))
+
+
+```
+
+
+## Outcome {.tabset}
+
+### General
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=score))+
+  theme_bw()+
+  geom_density()
+
+
+ggplot(feat, aes(x=score, group=as.factor(assessment_type), fill = as.factor(assessment_type)))+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+
+ggplot(feat, aes(x=score, group=as.factor(code_module), fill = as.factor(code_module)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=as.factor(assessment_type), fill = as.factor(assessment_type)))+
+  facet_grid(code_module~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+```
+
+### Gender impact 
+
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+ggplot(feat, aes(x=score, group=as.factor(gender), fill = as.factor(gender)))+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+ggplot(feat, aes(x=score, group=as.factor(code_module), fill = as.factor(code_module)))+
+  facet_grid(gender~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=as.factor(gender), fill = as.factor(gender)))+
+  facet_grid(code_module~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=as.factor(gender), fill = as.factor(gender)))+
+  facet_grid(code_module~., scales = "free_y")+
+  theme_bw()+
+  geom_histogram(alpha = .5)
+
+```
+
+
+### Poverty impact
+
+Clearly not randomly missing
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$imd_band <- factor(feat$imd_band, levels = c("0-10%","10-20","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"))
+
+ggplot(feat, aes(x=score, group=(imd_band), fill = (imd_band)))+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+ggplot(feat, aes(x=score, group=(code_module), fill = (code_module)))+
+  facet_grid(imd_band~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=(imd_band), fill = (imd_band)))+
+  facet_grid(code_module~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=(imd_band), fill = (imd_band)))+
+  facet_grid(code_module~., scales = "free_y")+
+  theme_bw()+
+  geom_histogram(alpha = .5)
+
+```
+
+
+### Prior Attempts > 0
+
+Retries score lower on tests - indicating that having to retake it displays poor command of material.
+
+```{r, message=FALSE, warning=FALSE}
+feat$prev_over_zero <- ifelse(feat$num_of_prev_attempts > 0, 1,0)
+
+ggplot(feat, aes(x=score, group=as.factor(prev_over_zero), fill = as.factor(prev_over_zero)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+
+ggplot(feat, aes(x=score, group=as.factor(num_of_prev_attempts), fill = as.factor(num_of_prev_attempts)))+
+  facet_grid(num_of_prev_attempts~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+```
+
+### Current Credits > 100
+
+Taking more than 100 credits at a time is bad for overall performance.
+
+```{r, message=FALSE, warning=FALSE}
+
+feat$cred_over_100 <- ifelse(feat$studied_credits > 100, 1,0)
+
+
+ggplot(feat, aes(x=score, group=as.factor(cred_over_100), fill = as.factor(cred_over_100)))+
+  facet_grid(assessment_type~.)+
+  theme_bw()+
+  geom_density(alpha = .5)
+
+```
+
+### Test Type Detail
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$test_plus <- paste(feat$code_presentation, feat$assessment_type)
+
+ggplot(feat, aes(x=score, group=(test_plus), fill = (test_plus)))+
+  facet_grid(code_presentation~.)+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_density(alpha = .5)
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$test_plus <- paste(feat$code_module, feat$assessment_type)
+
+ggplot(feat, aes(x=score, group=(test_plus), fill = (test_plus)))+
+  facet_grid(code_module~.)+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_density(alpha = .5)
+
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=9, fig.height=7}
+
+feat$test_plus <- paste(feat$code_module, feat$code_presentation)
+
+ggplot(feat, aes(x=score, group=(test_plus), fill = (test_plus)))+
+  facet_grid(code_module~.)+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_density(alpha = .5)
+
+```
